@@ -5,7 +5,7 @@ from datasets import load_dataset
 from prompts import ATTRIBUTE_DEFINITIONS, BASE_PROMPT_TMPL
 
 
-def create_zero_shot_dataset(dataset: datasets.Dataset = None):
+def create_zero_shot_dataset(appropriateness_dataset: datasets.Dataset = None):
     def generate_data_row(row, attribute_name: str, train: bool) -> Dict[str, str]:
         if train:
             return {
@@ -45,15 +45,15 @@ def create_zero_shot_dataset(dataset: datasets.Dataset = None):
 
     # generate new dataset from existing and save it
     train_dataset = datasets.Dataset.from_generator(
-        prompted_dataset_generator(train=True, ds=dataset),
-        features={"prompt": datasets.Value("string")},
+        prompted_dataset_generator(train=True, ds=appropriateness_dataset),
+        features=datasets.Features({"prompt": datasets.Value("string")}),
     )
     eval_dataset = datasets.Dataset.from_generator(
-        prompted_dataset_generator(train=False, ds=dataset),
-        features={
+        prompted_dataset_generator(train=False, ds=appropriateness_dataset),
+        features=datasets.Features({
             "prompt": datasets.Value("string"),
-            "correct_answer": datasets.Value("string"),
-        },
+            "correct_answer": datasets.ClassLabel(names=["True", "False"]),
+        }),
     )
     # create datasetdict from both datasets
     prompted_dataset = datasets.DatasetDict(
@@ -66,4 +66,4 @@ def create_zero_shot_dataset(dataset: datasets.Dataset = None):
 if __name__ == "__main__":
     ds = load_dataset("timonziegenbein/appropriateness-corpus")
 
-    create_zero_shot_dataset(dataset=ds)
+    create_zero_shot_dataset(appropriateness_dataset=ds)
