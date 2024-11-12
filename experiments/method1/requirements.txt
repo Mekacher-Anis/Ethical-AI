@@ -1,0 +1,14 @@
+torch
+numpy
+scikit-learn
+bitsandbytes
+transformers
+peft
+accelerate
+trl
+datasets
+evaluate
+mypy
+black
+ipykernel
+scikit-multilearn
