@@ -1,3 +1,6 @@
 prompting_techniques/.env
 .venv
 prompting_techniques
+zero_shot_dataset
+node_modules
+setup_env  _jupyterhub.sh 

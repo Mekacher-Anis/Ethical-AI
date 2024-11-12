@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from tqdm import tqdm
 from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig)
+from sklearn.metrics import accuracy_score 
 
 
 def test_model(model, tokenizer, eval_dataset):
@@ -77,3 +78,4 @@ if __name__ == "__main__":
     eval_dataset = zero_shot_dataset["validation"]
     results = test_model(model, tokenizer, eval_dataset)
     print(results)
+    print("Accuracy:", accuracy_score(eval_dataset["Inappropriateness"], results["Inappropriateness"]))
