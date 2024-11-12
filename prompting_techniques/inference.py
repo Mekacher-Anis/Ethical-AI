@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from tqdm import tqdm
 from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig)
-from sklearn.metrics import accuracy_score 
+from sklearn.metrics import accuracy_score, recall_score, precision_score
 
 
 def test_model(model, tokenizer, eval_dataset):
@@ -69,6 +69,10 @@ def load_untrained_llama2_model():
     )
     return tokenizer, model
 
+def min_recall_precision(y_pred, y_true, sample_weight=None):
+    recall = recall_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred)
+    return min(recall, precision)
 
 if __name__ == "__main__":
     tokenizer, model = load_untrained_llama2_model()
