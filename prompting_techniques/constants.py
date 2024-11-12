@@ -1,10 +1,28 @@
-BASE_PROMPT_TMPL = """
+ZERO_SHOT_PROMPT_TMPL = """
 Based on the following definition decide if a given argument contains {attribute_name}. An argument has {attribute_name} if: {attribute_definition}.
 With that definition decide if the following argument contains {attribute_name}:
 The topic of the following discussion is: {topic}
 ---------------------
 {argument}
 ---------------------
+Does the argument contain {attribute_name}? True or False? {true_or_false}
+"""
+
+FEW_SHOT_PROMPT_TMPL = """
+Based on the following definition decide if a given argument contains {attribute_name}. An argument has {attribute_name} if: {attribute_definition}.
+With that definition decide if the following arguments contain {attribute_name}. Here are some examples:
+---------------------
+The topic of the following discussion is: {first_example_topic}
+{first_example_argument}
+QUESTION: Does the argument contain {attribute_name}? True or False? {first_example_true_or_false}
+---------------------
+The topic of the following discussion is: {second_example_topic}
+{second_example_argument}
+QUESTION: Does the argument contain {attribute_name}? True or False? {second_example_true_or_false}
+---------------------
+Now it is your turn! Decide if the following argument contains {attribute_name}:
+The topic of the following discussion is: {topic}
+{argument}
 Does the argument contain {attribute_name}? True or False? {true_or_false}
 """
 

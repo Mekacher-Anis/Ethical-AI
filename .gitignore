@@ -2,5 +2,6 @@ prompting_techniques/.env
 .venv
 prompting_techniques/__pycache__
 zero_shot_dataset
+few_shot_dataset
 node_modules
 setup_env  _jupyterhub.sh 
