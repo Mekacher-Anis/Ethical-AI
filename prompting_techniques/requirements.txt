@@ -1,0 +1,13 @@
+torch
+datasets
+transformers
+tqdm
+python-dotenv
+pandas
+numpy
+bitsandbytes
+fairscale
+fire 
+blobfile
+llama-stack
+protobuf
