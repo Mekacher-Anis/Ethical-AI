@@ -59,7 +59,7 @@ def create_zero_shot_dataset(appropriateness_dataset: datasets.DatasetDict = Non
         prompted_dataset_generator(train=True, ds=appropriateness_dataset["train"]),
         features=datasets.Features({"prompt": datasets.Value("string")}),
     )
-    # generate this dataset for testing in a environment similar to the production environment
+    # generate this dataset for testing in an environment similar to the production environment
     eval_dataset = datasets.Dataset.from_generator(
         prompted_dataset_generator(
             train=False, ds=appropriateness_dataset["validation"]
