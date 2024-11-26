@@ -1,4 +1,3 @@
-torch
 datasets
 transformers
 tqdm
@@ -6,8 +5,11 @@ python-dotenv
 pandas
 numpy
 bitsandbytes
-fairscale
-fire 
-blobfile
-llama-stack
-protobuf
+black
+isort
+flake8
+scikit-learn
+accelerate
+jupyter
+peft
+trl
