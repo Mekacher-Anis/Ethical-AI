@@ -1,35 +1,31 @@
-
-from sklearn.ensemble import GridSearchCV
-from sklearn.metrics import accuracy_score, precision_score, recall_score, make_scorer, f1_score
-import inference
 import datasets
-#from skllm.preprocessing import GPTVectorizer
-#from skllm import ZeroShotGPTClassifier
 import pandas as pd
+from constants import ALL_ATTRIBUTES
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
-def min_recall_precision(y_true, y_pred, sample_weight=None):
-    recall = recall_score(y_true, y_pred)
-    precision = precision_score(y_true, y_pred)
-    return min(recall, precision)
+
+def calculate_metrics(eval_dataset: datasets.Dataset, pred_dataset: pd.DataFrame):
+    result = {}
+    eval_dataset = pd.DataFrame(eval_dataset).set_index("post_id")
+    for attribute in ALL_ATTRIBUTES:
+        # create new dataframe with only the attribute columns join on post_id
+        attribute_df = (
+            eval_dataset[attribute]
+            .to_frame()
+            .join(pred_dataset[attribute].to_frame(), rsuffix="_pred")
+            .dropna()
+        )
+        result[attribute] = metrics(
+            attribute_df[attribute + "_pred"].tolist(), attribute_df[attribute].tolist()
+        )
+    return result
+
 
 def metrics(y_pred, y_true):
-    data={
-        "min_racall_precision": min_recall_precision(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred),
-        "recall": recall_score(y_true, y_pred),
-        "micro_F1_score": f1_score(y_true, y_pred, average='micro'),
-        "Accuracy": accuracy_score(y_true, y_pred)
+    return {
+        "precision": float(precision_score(y_true, y_pred)),
+        "recall": float(recall_score(y_true, y_pred)),
+        "micro_F1_score": float(f1_score(y_true, y_pred, average="micro")),
+        "macro_F1_score": float(f1_score(y_true, y_pred, average="macro")),
+        "accuracy": accuracy_score(y_true, y_pred),
     }
-    
-    
-    return data
-
-if __name__ == "__main__":
-    tokenizer, model =inference.load_untrained_llama2_model()
-    print("Model loaded")
-    zero_shot_dataset = datasets.load_from_disk("zero_shot_dataset")
-    eval_dataset = zero_shot_dataset["validation"]
-    print("Dataset loaded")
-    y_pred=inference.test_model(model, tokenizer, eval_dataset)
-    print(pd.DataFrame(metrics(y_pred, eval_dataset)))
-    
