@@ -15,7 +15,7 @@ from datasets import load_dataset
 RANDOM_SEED = 420
 
 
-def create_zero_shot_dataset(appropriateness_dataset: datasets.Dataset = None):
+def create_zero_shot_dataset(appropriateness_dataset: datasets.DatasetDict = None):
     def generate_train_data_row(row, attribute_name: str) -> Dict[str, str]:
         return {
             "prompt": ZERO_SHOT_PROMPT_TMPL.format(
@@ -37,19 +37,17 @@ def create_zero_shot_dataset(appropriateness_dataset: datasets.Dataset = None):
         return result
 
     # zero-shot dataset creation
-    def prompted_dataset_generator(
-        train: bool, ds: datasets.Dataset
-    ) -> Generator[Dict[str, Any], None, None]:
+    def prompted_dataset_generator(train: bool, ds: datasets.Dataset):
         def gen():
             if train:
-                for example in ds["train"]:
+                for example in ds:
                     for (
                         attribute_name,
                         attribute_definition,
                     ) in ATTRIBUTE_DEFINITIONS.items():
                         yield generate_train_data_row(example, attribute_name)
             else:
-                for example in ds["validation"]:
+                for example in ds:
                     yield generate_eval_data_row(
                         example,
                     )
@@ -58,30 +56,34 @@ def create_zero_shot_dataset(appropriateness_dataset: datasets.Dataset = None):
 
     # generate new dataset from existing and save it
     train_dataset = datasets.Dataset.from_generator(
-        prompted_dataset_generator(train=True, ds=appropriateness_dataset),
+        prompted_dataset_generator(train=True, ds=appropriateness_dataset["train"]),
         features=datasets.Features({"prompt": datasets.Value("string")}),
     )
-    eval_features = {
-        "issue": datasets.Value("string"),
-        "post_text": datasets.Value("string"),
-        "correct_prediction_vector": datasets.Sequence(datasets.Value("bool")),
-    }
-    for attribute in ALL_ATTRIBUTES:
-        eval_features[attribute] = datasets.Value("bool")
-
+    # generate this dataset for testing in a environment similar to the production environment
     eval_dataset = datasets.Dataset.from_generator(
-        prompted_dataset_generator(train=False, ds=appropriateness_dataset),
-        # features=datasets.Features(eval_features),
+        prompted_dataset_generator(
+            train=False, ds=appropriateness_dataset["validation"]
+        ),
+    )
+    # generate this dataset to evaluate while training to stop at minimal loss
+    eval_dataset_prompted = datasets.Dataset.from_generator(
+        prompted_dataset_generator(
+            train=True, ds=appropriateness_dataset["validation"]
+        ),
     )
     # create datasetdict from both datasets
     prompted_dataset = datasets.DatasetDict(
-        {"train": train_dataset, "validation": eval_dataset}
+        {
+            "train": train_dataset,
+            "validation": eval_dataset,
+            "validation_prompted": eval_dataset_prompted,
+        }
     )
     # save dataset to disk
     prompted_dataset.save_to_disk("zero_shot_dataset")
 
-
-def create_few_shot_dataset(appropriateness_dataset: datasets.Dataset = None):
+"""
+def create_few_shot_dataset(appropriateness_dataset: datasets.DatasetDict = None):
     df = pd.DataFrame(appropriateness_dataset["train"])
 
     def generate_train_data_row(row, attribute_name: str) -> Dict[str, str]:
@@ -128,19 +130,17 @@ def create_few_shot_dataset(appropriateness_dataset: datasets.Dataset = None):
         return result
 
     # zero-shot dataset creation
-    def prompted_dataset_generator(
-        train: bool, ds: datasets.Dataset
-    ) -> Generator[Dict[str, Any], None, None]:
+    def prompted_dataset_generator(train: bool, ds: datasets.Dataset):
         def gen():
             if train:
-                for example in ds["train"]:
+                for example in ds:
                     for (
                         attribute_name,
                         attribute_definition,
                     ) in ATTRIBUTE_DEFINITIONS.items():
                         yield generate_train_data_row(example, attribute_name)
             else:
-                for example in ds["validation"]:
+                for example in ds:
                     yield generate_eval_data_row(
                         example,
                     )
@@ -149,7 +149,7 @@ def create_few_shot_dataset(appropriateness_dataset: datasets.Dataset = None):
 
     # generate new dataset from existing and save it
     train_dataset = datasets.Dataset.from_generator(
-        prompted_dataset_generator(train=True, ds=appropriateness_dataset),
+        prompted_dataset_generator(train=True, ds=appropriateness_dataset["train"]),
         features=datasets.Features({"prompt": datasets.Value("string")}),
     )
     eval_features = {
@@ -161,7 +161,9 @@ def create_few_shot_dataset(appropriateness_dataset: datasets.Dataset = None):
         eval_features[attribute] = datasets.Value("bool")
 
     eval_dataset = datasets.Dataset.from_generator(
-        prompted_dataset_generator(train=False, ds=appropriateness_dataset),
+        prompted_dataset_generator(
+            train=False, ds=appropriateness_dataset["validation"]
+        ),
         # features=datasets.Features(eval_features),
     )
     # create datasetdict from both datasets
@@ -170,7 +172,7 @@ def create_few_shot_dataset(appropriateness_dataset: datasets.Dataset = None):
     )
     # save dataset to disk
     prompted_dataset.save_to_disk("few_shot_dataset")
-
+"""
 
 if __name__ == "__main__":
     ds = load_dataset("timonziegenbein/appropriateness-corpus")
@@ -179,4 +181,4 @@ if __name__ == "__main__":
         shutil.rmtree(d, ignore_errors=True)
 
     create_zero_shot_dataset(appropriateness_dataset=ds)
-    create_few_shot_dataset(appropriateness_dataset=ds)
+    #create_few_shot_dataset(appropriateness_dataset=ds)
