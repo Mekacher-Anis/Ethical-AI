@@ -1,16 +1,16 @@
-import os
+import json
 
 import datasets
-from constants import (ATTRIBUTE_DEFINITIONS, ATTRIBUTE_RELATIONS,
-                       BASE_PROMPT_TMPL)
-from dotenv import load_dotenv
+import pandas as pd
+import torch
+from constants import ATTRIBUTE_DEFINITIONS, ATTRIBUTE_RELATIONS, ZERO_SHOT_PROMPT_TMPL
 from tqdm import tqdm
-from transformers import (AutoModelForCausalLM, AutoTokenizer,
-                          BitsAndBytesConfig)
-from sklearn.metrics import accuracy_score, recall_score, precision_score
+from utils import load_untrained_llama2_model
+
+from prompting_techniques.metrics import calculate_metrics
 
 
-def test_model(model, tokenizer, eval_dataset):
+def test_model_zero_shot(model, tokenizer, eval_dataset):
 
     # get token id for "true" and "false" tokens
     true_token_id = tokenizer.encode("true", return_tensors="pt").to("cuda")[0][1]
@@ -21,7 +21,7 @@ def test_model(model, tokenizer, eval_dataset):
         cur_row = {"post_id": sample["post_id"]}
 
         for attribute_name, attribute_definition in ATTRIBUTE_DEFINITIONS.items():
-            prompt = BASE_PROMPT_TMPL.format(
+            prompt = ZERO_SHOT_PROMPT_TMPL.format(
                 attribute_name=attribute_name,
                 attribute_definition=attribute_definition,
                 topic=sample["issue"],
@@ -36,50 +36,31 @@ def test_model(model, tokenizer, eval_dataset):
                 return_dict_in_generate=True,
                 output_logits=True,
             )
+            # first batch, first token of sequence
             true_logit = model_output["logits"][0][0][true_token_id]
             false_logit = model_output["logits"][0][0][false_token_id]
-            cur_row[attribute_name] = true_logit > false_logit
+            is_attribute_true: torch.Tensor = true_logit > false_logit
+            cur_row[attribute_name] = 1 if is_attribute_true.item() else 0
         for attribute_name, attribute_relation in ATTRIBUTE_RELATIONS.items():
-            cur_row[attribute_name] = any(
-                [cur_row[attribute] for attribute in attribute_relation]
+            cur_row[attribute_name] = (
+                1
+                if any([cur_row[attribute] for attribute in attribute_relation])
+                else 0
             )
         results.append(cur_row)
+    results = pd.DataFrame(results).set_index("post_id")
     return results
 
 
-def load_untrained_llama2_model():
-    load_dotenv()
-
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True
-    )
-    # pull llama2 model from huggingface
-    tokenizer = AutoTokenizer.from_pretrained(
-        "meta-llama/Llama-2-7b-hf",
-        token=os.getenv("HF_TOKEN"),
-        device_map="auto",
-        config=quantization_config,
-    )
-    model = AutoModelForCausalLM.from_pretrained(
-        "meta-llama/Llama-2-7b-hf",
-        token=os.getenv("HF_TOKEN"),
-        device_map="auto",
-        config=quantization_config,
-        torch_dtype="float16",
-    )
-    return tokenizer, model
-
-def min_recall_precision(y_pred, y_true, sample_weight=None):
-    recall = recall_score(y_true, y_pred)
-    precision = precision_score(y_true, y_pred)
-    return min(recall, precision)
-
 if __name__ == "__main__":
+    # load llama2 tokenizer
     tokenizer, model = load_untrained_llama2_model()
+    model.load_adapter("output/checkpoint-300")
     print("Model loaded")
     # load dataset from file
     zero_shot_dataset = datasets.load_from_disk("zero_shot_dataset")
     eval_dataset = zero_shot_dataset["validation"]
-    results = test_model(model, tokenizer, eval_dataset)
-    print(results)
-    print("Accuracy:", accuracy_score(eval_dataset["Inappropriateness"], results["Inappropriateness"]))
+    results = test_model_zero_shot(model, tokenizer, eval_dataset)
+    metrics = calculate_metrics(eval_dataset, results)
+    with open("zero_shot_with_tuning.json", "w") as f:
+        json.dump(metrics, f, indent=4)
