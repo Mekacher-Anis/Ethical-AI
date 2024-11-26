@@ -82,6 +82,7 @@ def create_zero_shot_dataset(appropriateness_dataset: datasets.DatasetDict = Non
     # save dataset to disk
     prompted_dataset.save_to_disk("zero_shot_dataset")
 
+
 """
 def create_few_shot_dataset(appropriateness_dataset: datasets.DatasetDict = None):
     df = pd.DataFrame(appropriateness_dataset["train"])
@@ -181,4 +182,4 @@ if __name__ == "__main__":
         shutil.rmtree(d, ignore_errors=True)
 
     create_zero_shot_dataset(appropriateness_dataset=ds)
-    #create_few_shot_dataset(appropriateness_dataset=ds)
+    # create_few_shot_dataset(appropriateness_dataset=ds)
