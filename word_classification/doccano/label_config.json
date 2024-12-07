@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "text": "Excessive Intensity",
+    "prefixKey": null,
+    "suffixKey": null,
+    "backgroundColor": "#73D8FF",
+    "textColor": "#ffffff"
+  },
+  {
+    "id": 2,
+    "text": "Emotional Deception",
+    "prefixKey": null,
+    "suffixKey": null,
+    "backgroundColor": "#0062B1",
+    "textColor": "#ffffff"
+  },
+  {
+    "id": 3,
+    "text": "Missing Seriousness",
+    "prefixKey": null,
+    "suffixKey": null,
+    "backgroundColor": "#FA28FF",
+    "textColor": "#ffffff"
+  },
+  {
+    "id": 4,
+    "text": "Missing Openness",
+    "prefixKey": null,
+    "suffixKey": null,
+    "backgroundColor": "#AB149E",
+    "textColor": "#ffffff"
+  },
+  {
+    "id": 5,
+    "text": "Unclear Meaning",
+    "prefixKey": null,
+    "suffixKey": null,
+    "backgroundColor": "#A4DD00",
+    "textColor": "#ffffff"
+  },
+  {
+    "id": 6,
+    "text": "Missing Relevance",
+    "prefixKey": null,
+    "suffixKey": null,
+    "backgroundColor": "#68BC00",
+    "textColor": "#ffffff"
+  },
+  {
+    "id": 7,
+    "text": "Confusing Reasoning",
+    "prefixKey": null,
+    "suffixKey": null,
+    "backgroundColor": "#194D33",
+    "textColor": "#ffffff"
+  },
+  {
+    "id": 8,
+    "text": "Detrimental Orthography",
+    "prefixKey": null,
+    "suffixKey": null,
+    "backgroundColor": "#F44E3B",
+    "textColor": "#ffffff"
+  },
+  {
+    "id": 9,
+    "text": "Reason Unclassified",
+    "prefixKey": null,
+    "suffixKey": null,
+    "backgroundColor": "#9F0500",
+    "textColor": "#ffffff"
+  }
+]
