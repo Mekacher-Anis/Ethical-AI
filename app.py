@@ -4,7 +4,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-
+from annotated_text import annotated_text
 
 def predict_on_input(input):
     #call model here
