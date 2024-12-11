@@ -33,7 +33,7 @@ def main():
             else:
                 st.success("Appropriet")
             #st.text_area(label='Output',value=output,disabled=True)
-            annotated_text(output)
+            annotated_text("This", ("bullshit", "Toxic Emotions"))
 
     else:
         st.subheader("About")
