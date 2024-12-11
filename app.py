@@ -19,7 +19,7 @@ def main():
     choice = st.sidebar.selectbox("Menu",menu)
     
     if choice == "Home":
-        st.subheader("Check an argument for Inapproprietness")
+        st.subheader("Check an argument for Inappropriatness")
         
         with st.form(key='myform'):
             raw_text = st.text_area("Input an argument here.")
@@ -29,9 +29,9 @@ def main():
             #process the text
             output, result = predict_on_input(raw_text)
             if result:
-                st.error("Inappropriet")
+                st.error("Inappropriate")
             else:
-                st.success("Appropriet")
+                st.success("Appropriate")
             #st.text_area(label='Output',value=output,disabled=True)
             annotated_text("This", ("bullshit", "Toxic Emotions"))
 
