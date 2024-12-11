@@ -8,7 +8,7 @@ from annotated_text import annotated_text
 
 def predict_on_input(input):
     #call model here
-    result = annotated_text(input)
+    result = input
 
     inappropriet = False
     return result, inappropriet
@@ -32,7 +32,8 @@ def main():
                 st.error("Inappropriet")
             else:
                 st.success("Appropriet")
-            st.text_area(label='Output',value=output,disabled=True)
+            #st.text_area(label='Output',value=output,disabled=True)
+            annotated_text(output)
 
     else:
         st.subheader("About")
