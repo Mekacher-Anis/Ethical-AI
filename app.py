@@ -8,7 +8,7 @@ from annotated_text import annotated_text
 
 def predict_on_input(input):
     #call model here
-    result = input
+    result = annotated_text(input)
 
     inappropriet = False
     return result, inappropriet
