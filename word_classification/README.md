@@ -6,14 +6,15 @@
    1. Run: `pip install doccano`
    * maybe you have to downgrade the numpy version to 1.26 manually
    1. Run `doccano createuser --username user --password password`
-   2. Run in another terminal: `doccano task`
-   3. Go to `http://127.0.0.1:8000/` in your browser
+   2. Run `doccano webserver`
+   3. Run in another terminal: `doccano task`
+   4. Go to `http://127.0.0.1:8000/` in your browser
 3. Create doccano project
    1. Login with your credentials
    2. Create a sequence labeling project
    3. Add a project name and description
    4. Select the option: `Allow overlapping spans`
-   6. Create project
+   5. Create project
 4. Setup doccano project
    1. Import labels from `word_classification/doccano/label_config.json`
    2. Add guideline text from `word_classification/doccano/guideline.md`
