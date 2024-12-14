@@ -12,3 +12,4 @@ mypy
 black
 ipykernel
 scikit-multilearn
+python-dotenv
