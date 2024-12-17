@@ -54,6 +54,7 @@ if __name__ == "__main__":
 
         final_df = df[["post_text", "issue"]]
         final_df["document_labels"] = df.aggregate(aggregate_labels, axis=1)
+        final_df["label"] = [[] for _ in range(len(final_df))]
 
         indices = pd.Series([], dtype=int)
 
