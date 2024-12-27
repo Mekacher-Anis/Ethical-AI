@@ -8,7 +8,7 @@ from annotated_text import annotated_text
 
 CATEGORIES = [
     #Threshold tags for influential tokens 
-    "","Weak Influenze","Medium Influenze","Strong Influenze"
+    "","Weak Influence","Medium Influence","Strong Influence"
 ]
 THRESHOLDS = [
     #needs to be edited to match actual thresholds
