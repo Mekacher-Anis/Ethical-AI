@@ -28,14 +28,14 @@ TESTINPUT = {
   ]
 }
 
-''' 
-    Here the model can be called to generate a responce on the input.
-    The model predictes if a text is Innaprpriate or not and uses Captum to determin which tokens are influencing the decision.
-    The Influence is formatet in a dictionary: {"Dimension of Innapropriateness": [{"token": "actul_token", "einfluss_wrt": float}]}
 
-    @input      the raw text input 
-    @return     the input that was given, a Bool True if input was innapropreate, the formated tuples using build_tuples for influential tokens marked for anoteted_text
-'''
+#    Here the model can be called to generate a responce on the input.
+#    The model predictes if a text is Innaprpriate or not and uses Captum to determin which tokens are influencing the decision.
+#    The Influence is formatet in a dictionary: {"Dimension of Innapropriateness": [{"token": "actul_token", "einfluss_wrt": float}]}
+
+#    @input      the raw text input 
+#    @return     the input that was given, a Bool True if input was innapropreate, the formated tuples using build_tuples for influential tokens marked for anoteted_text
+
 def predict_on_input(input):
     #call model here
     
@@ -50,14 +50,14 @@ def predict_on_input(input):
     return input, inappropriate, build_tuples(captum_out)
 
 
-'''
-    Building a formatet string with annotated tokens using annotated_text from streamlit. 
-    The annotations show how high the influenz on the decition of the models was per token based on thresholds.
 
-    @tup input list of tuples with ("token", float)
+#    Building a formatet string with annotated tokens using annotated_text from streamlit. 
+#    The annotations show how high the influenz on the decition of the models was per token based on thresholds.
+
+#    @tup input list of tuples with ("token", float)
 
 
-'''
+
 def build_string(tup):
     copy = tup
     updated_list = []
@@ -75,12 +75,12 @@ def build_string(tup):
 
     return
 
-'''
-    Transfoming the captum dictionary in a form usuable by annotated_text a dictionary of lists of tuples.
-    The entries of the dictionary are sorted by categorie. Each list is to be used with annotated text seperately.
+#
+#    Transfoming the captum dictionary in a form usuable by annotated_text a dictionary of lists of tuples.
+#   The entries of the dictionary are sorted by categorie. Each list is to be used with annotated text seperately.
 
-    @dic input dictionary formated like TESTINPUT
-'''
+#   @dic input dictionary formated like TESTINPUT
+
 def build_tuples(dic):
     #build a dictionary of touples
     tuples = {}
