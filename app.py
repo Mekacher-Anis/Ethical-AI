@@ -4,30 +4,42 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import ast
 from annotated_text import annotated_text
 
 CATEGORIES = [
     #Threshold tags for influential tokens 
-    "","Weak Influence","Medium Influence","Strong Influence"
+    "Strong Influence","Medium Influence","Weak Influence"
 ]
 THRESHOLDS = [
     #needs to be edited to match actual thresholds
-    0, 0.5 , 1
+    0.5, 0.1 , 0.00
 ]
 
-TESTINPUT = {
-  "Inappropiateness":
-  [
-    {"token": "Du", "einfluss_wrt": 0.2},
-    {"token": "Hurensohn", "einfluss_wrt": 0.7}
-  ],
-  "Toxic Emotions": 
-  [
-    {"token": "Du","einfluss_wrt": 0},
-    {"token": "Hurensohn", "einfluss_wrt": 1}
-  ]
-}
 
+
+
+#load csv of the captum testsets output
+testset_csv = "tables/testset_together.csv"
+data = pd.read_csv(testset_csv)
+
+
+
+#convert the strings of the csv to its original data form
+def convert_to_list_of_tuples(entry):
+    try:
+        return ast.literal_eval(entry)
+    except (ValueError, SyntaxError) as e:
+        print(f"Error converting entry: {entry} -> {e}")
+        return entry
+    
+converted_data = data.applymap(convert_to_list_of_tuples)
+
+def get_text(captum_out):
+    entries = convert_to_list_of_tuples(captum_out['Inappropriateness'][1])
+    text_new = [entry[0].replace('▁', ' ') for entry in entries if not (entry[0] == '[CLS]' or entry[0] == '[SEP]')]
+
+    return "".join(text_new)
 
 #    Here the model can be called to generate a responce on the input.
 #    The model predictes if a text is Innaprpriate or not and uses Captum to determin which tokens are influencing the decision.
@@ -40,14 +52,17 @@ def predict_on_input(input):
     #call model here
     
 
-    inappropriate = True
     
-    #captum answer as a dictionary formated like TESTINPUT
 
-    captum_out = TESTINPUT
+    
+    captum_out = converted_data.sample(n=1).to_dict(orient="records")[0]
+    
+    raw_text = get_text(captum_out)
 
+    inappropriate = True if captum_out['Inappropriateness'][0].startswith('1') else False
+    
 
-    return input, inappropriate, build_tuples(captum_out)
+    return raw_text, inappropriate, build_tuples(captum_out)
 
 
 
@@ -56,24 +71,50 @@ def predict_on_input(input):
 
 #    @tup input list of tuples with ("token", float)
 
-
+def merge_same_influence(list):
+    updated_list = []
+    last = None
+    for string in list:
+        if type(string) == type(("1",1)):
+            if string[1] == last:
+                
+                curr, influence = updated_list.pop()
+                updated_list.append((curr + string[0], influence))
+            else:
+                updated_list.append(string)
+                last = string[1]
+        else:
+            updated_list.append(string)
+            last = None
+    return updated_list
 
 def build_string(tup):
     copy = tup
     updated_list = []
+
     for token, value in copy:
         if value <= 0:
             updated_list.append(token)
         else:
-            replacement = next((rep for t, rep in zip(THRESHOLDS, CATEGORIES) if value <= t), CATEGORIES[-1])
-        
-            updated_list.append((token, replacement))
-        
-    
+            replacement = None
+            
+            for thresh, rep in zip(THRESHOLDS, CATEGORIES): 
+                if value >= thresh:
+                    replacement = rep
+                    
+                    break
+            if replacement:
+                updated_list.append((token, replacement)) 
+            else:
+                updated_list.append(token)
+     
+    updated_list = merge_same_influence(updated_list)
     #put the formated string out
     annotated_text(updated_list)    
 
     return
+
+
 
 #
 #    Transfoming the captum dictionary in a form usuable by annotated_text a dictionary of lists of tuples.
@@ -84,8 +125,14 @@ def build_string(tup):
 def build_tuples(dic):
     #build a dictionary of touples
     tuples = {}
-    for category, entries in dic.items():
-        tuples[category] = [(entry['token'], entry['einfluss_wrt']) for entry in entries]
+    for category, (value, entries) in dic.items():
+        
+        entries= convert_to_list_of_tuples(entries)
+        
+        if value.startswith('1'):
+            
+            tuples[category] = [ (entry[0].replace('▁', ' '), entry[1])  for entry in entries if not (entry[0] == '[CLS]' or entry[0] == '[SEP]')]
+            
     return tuples  
 
 def main():
@@ -101,8 +148,14 @@ def main():
             submit_text = st.form_submit_button(label='Submit')
 
         if submit_text:
+
+
             #process the text
             output, result, category_tuples = predict_on_input(raw_text)
+
+            
+            st.text(output)
+
             if result:
                 st.error("Inappropriate")
             else:
