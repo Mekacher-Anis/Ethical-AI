@@ -1,0 +1,8 @@
+torch
+pydantic
+outlines
+transformers
+python-dotenv
+accelerate
+sentencepiece
+datasets
