@@ -87,7 +87,7 @@ def update_snippet_positions(
     snippets: List[ProblematicSnippet], post_text: str
 ) -> None:
     for snippet in snippets:
-        re_result = re.search(snippet.original_text, post_text)
+        re_result = re.search(re.escape(snippet.original_text.strip()), post_text)
         if re_result is None:
             continue
         snippet.start = re_result.start()
@@ -125,9 +125,11 @@ def convert_tokens_to_output(token_list: List[Token]) -> List[Tuple[str, float]]
 
 
 csv_file = "testset_prediction_text.csv"
-reader = csv.DictReader(open(csv_file))
+reader = list(csv.DictReader(open(csv_file)))
 result = []
-for line_dict in tqdm(reader):
+for i, line_dict in tqdm(enumerate(reader)):
+    if i<11:
+        continue
     post_text = line_dict["Text"]
     all_tokens = tokenize_post_text(post_text)
     all_tokens_as_zero = [(token.text, 0.0) for token in all_tokens]
