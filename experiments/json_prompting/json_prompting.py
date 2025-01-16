@@ -127,7 +127,13 @@ def convert_tokens_to_output(token_list: List[Token]) -> List[Tuple[str, float]]
 csv_file = "testset_prediction_text.csv"
 reader = list(csv.DictReader(open(csv_file)))
 result = []
+# load pickled results if available
+if os.path.exists("testset_prediction_text_result.pkl"):
+    with open("testset_prediction_text_result.pkl", "rb") as f:
+        result = pickle.load(f)
 for i, line_dict in tqdm(enumerate(reader)):
+    if i < len(result):
+        continue
     post_text = line_dict["Text"]
     all_tokens = tokenize_post_text(post_text)
     all_tokens_as_zero = [(token.text, 0.0) for token in all_tokens]
@@ -146,7 +152,9 @@ for i, line_dict in tqdm(enumerate(reader)):
             line_result[attribute_name] = str(result_tuple)
             torch.cuda.empty_cache()
     result.append(line_result)
-
+    # pickle results
+    with open("testset_prediction_text_result.pkl", "wb") as f:
+        pickle.dump(result, f)
 
 # convert to dataframe and then save as csv
 df = pd.DataFrame(result)
