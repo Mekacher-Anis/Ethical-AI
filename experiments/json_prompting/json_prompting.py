@@ -144,6 +144,7 @@ for i, line_dict in tqdm(enumerate(reader)):
                 ),
             )
             line_result[attribute_name] = str(result_tuple)
+            torch.cuda.empty_cache()
     result.append(line_result)
 
 
