@@ -1,18 +1,18 @@
 import csv
-from tqdm import tqdm
-
+import os
+import pickle
 import re
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
+
+import outlines
+import pandas as pd
+import torch
 from constants import ATTRIBUTE_DEFINITIONS
 from datasets import load_dataset
-
-import pandas as pd
-from typing import List, Optional, Tuple, Dict
-import torch
-import outlines
-from enum import Enum
-from pydantic import BaseModel, constr, conint
 from dotenv import load_dotenv
-import os
+from pydantic import BaseModel, conint, constr
+from tqdm import tqdm
 
 load_dotenv()
 model = outlines.models.transformers(
