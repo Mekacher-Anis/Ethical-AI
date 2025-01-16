@@ -128,8 +128,6 @@ csv_file = "testset_prediction_text.csv"
 reader = list(csv.DictReader(open(csv_file)))
 result = []
 for i, line_dict in tqdm(enumerate(reader)):
-    if i<11:
-        continue
     post_text = line_dict["Text"]
     all_tokens = tokenize_post_text(post_text)
     all_tokens_as_zero = [(token.text, 0.0) for token in all_tokens]
