@@ -8,6 +8,8 @@ from typing import Dict, List, Optional, Tuple
 import outlines
 import pandas as pd
 import torch
+import gc
+
 from constants import ATTRIBUTE_DEFINITIONS
 from datasets import load_dataset
 from dotenv import load_dotenv
@@ -150,6 +152,9 @@ for i, line_dict in tqdm(enumerate(reader)):
                 ),
             )
             line_result[attribute_name] = str(result_tuple)
+            # do garbage collection so the vram doesn't fill up
+            del result_tuple
+            gc.collect()
             torch.cuda.empty_cache()
     result.append(line_result)
     # pickle results
