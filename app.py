@@ -20,7 +20,8 @@ THRESHOLDS = [
 
 
 #load csv of the captum testsets output
-testset_csv = "tables/testset_together.csv"
+#testset_csv = "tables/testset_together.csv"
+testset_csv = "tables/testset_prediction_text_result.csv"
 data = pd.read_csv(testset_csv)
 
 
@@ -57,13 +58,15 @@ def predict_on_input(random=True,row=None):
     if random:
         captum_out = converted_data.sample(n=1).to_dict(orient="records")[0]
     else:
-        print(type(converted_data.iloc[[int(row)]]))
-        print(type(converted_data.sample(n=1)))
+        #print(type(converted_data.iloc[[int(row)]]))
+        #print(type(converted_data.sample(n=1)))
         captum_out = converted_data.iloc[[int(row)]].to_dict(orient="records")[0]
 
     raw_text = get_text(captum_out)
-
-    inappropriate = True if captum_out['Inappropriateness'][0].startswith('1') else False
+    if isinstance(captum_out['Inappropriateness'][0], str):
+        inappropriate = True if captum_out['Inappropriateness'][0].startswith('1') else False
+    else:
+        inappropriate = captum_out['Inappropriateness'][0] == 1
     
 
     return raw_text, inappropriate, build_tuples(captum_out)
@@ -134,7 +137,7 @@ def build_tuples(dic):
         
         entries= convert_to_list_of_tuples(entries)
         
-        if value.startswith('1'):
+        if isinstance(value, str) and value.startswith('1') or isinstance(value, int) and value == 1:
             
             tuples[category] = [ (entry[0].replace('▁', ' '), entry[1])  for entry in entries if not (entry[0] == '[CLS]' or entry[0] == '[SEP]')]
             
