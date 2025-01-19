@@ -3,7 +3,7 @@ import os
 import pickle
 import re
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import outlines
 import pandas as pd
@@ -15,12 +15,14 @@ from datasets import load_dataset
 from dotenv import load_dotenv
 from pydantic import BaseModel, conint, constr
 from tqdm import tqdm
+import time
+
 
 load_dotenv()
 model = outlines.models.transformers(
     "meta-llama/Meta-Llama-3.1-8B-Instruct",
     model_kwargs={"torch_dtype": torch.bfloat16, "token": os.getenv("HF_TOKEN")},
-    device="cuda",
+    device="mps",
 )
 
 
@@ -60,17 +62,39 @@ Comment in question:
 """
 
 
-def generate_text_analysis(attribute_definition: str, attribute: str, comment: str):
-    return generator(
-        prompt_template.format(
-            attribute_definition=attribute_definition,
-            attribute=attribute,
-            comment=comment,
-        )
-    )
+def generate_text_analysis(
+    attribute_definition: str, attribute: str, comment: str, max_trials: int = 5
+):
+    trials = 0
+    while True:
+        try:
+            return generator(
+                prompt_template.format(
+                    attribute_definition=attribute_definition,
+                    attribute=attribute,
+                    comment=comment,
+                ),
+                max_tokens=300,
+            )
+        except:
+            trials += 1
+            if trials >= max_trials:
+                with open("./failed.txt", "+a") as out:
+                    out.write(
+                        "*" * 10
+                        + "FAILED"
+                        + "*" * 10
+                        + "\n"
+                        + attribute
+                        + "\n"
+                        + comment
+                        + "\n" * 5
+                    )
+                    out.flush()
+                return TextAnalysis(problematic_snippets=[])
 
 
-ds = load_dataset("timonziegenbein/appropriateness-corpus")["test"]
+# ds = load_dataset("timonziegenbein/appropriateness-corpus")["test"]
 
 
 def analyse_post_for_attribute(
@@ -79,6 +103,7 @@ def analyse_post_for_attribute(
     analysis_result = generate_text_analysis(
         attribute_name, attribute_definition, post_text
     )
+    # print(analysis_result)
     update_snippet_positions(analysis_result.problematic_snippets, post_text)
     token_list = tokenize_post_text(post_text)
     assign_severity_to_tokens(token_list, analysis_result.problematic_snippets)
@@ -128,15 +153,18 @@ def convert_tokens_to_output(token_list: List[Token]) -> List[Tuple[str, float]]
 
 csv_file = "testset_prediction_text.csv"
 reader = list(csv.DictReader(open(csv_file)))
-result = []
+result: list[dict[str, Any]] = []
 # load pickled results if available
 if os.path.exists("testset_prediction_text_result.pkl"):
     with open("testset_prediction_text_result.pkl", "rb") as f:
         result = pickle.load(f)
-for i, line_dict in tqdm(enumerate(reader)):
-    if i < len(result):
-        continue
+# reader = reader[len(result):]
+
+last_time = time.time()
+for i, line_dict in tqdm(enumerate(reader), total=len(reader)):
+    # print(i)
     post_text = line_dict["Text"]
+    # print(post_text)
     all_tokens = tokenize_post_text(post_text)
     all_tokens_as_zero = [(token.text, 0.0) for token in all_tokens]
     line_result = {}
@@ -145,6 +173,8 @@ for i, line_dict in tqdm(enumerate(reader)):
             result_tuple = (0, all_tokens_as_zero)
             line_result[attribute_name] = str(result_tuple)
         else:
+            # print(f'Working attribute "{attribute_name}"', flush=True)
+
             result_tuple = (
                 1,
                 analyse_post_for_attribute(
@@ -155,11 +185,17 @@ for i, line_dict in tqdm(enumerate(reader)):
             # do garbage collection so the vram doesn't fill up
             del result_tuple
             gc.collect()
-            torch.cuda.empty_cache()
+            # print(f'Done attribute "{attribute_name}"', flush=True)
+
     result.append(line_result)
     # pickle results
     with open("testset_prediction_text_result.pkl", "wb") as f:
         pickle.dump(result, f)
+
+    # current_time = time.time()
+    # print(f'Iteration took {current_time - last_time}')
+    # last_time = current_time
+    # print(f'Predicted run_time : {(current_time - last_time) * (len(reader) - i)} s')
 
 # convert to dataframe and then save as csv
 df = pd.DataFrame(result)
