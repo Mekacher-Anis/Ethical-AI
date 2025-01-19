@@ -9,7 +9,7 @@ from annotated_text import annotated_text
 
 CATEGORIES = [
     #Threshold tags for influential tokens 
-    "Strong Influence","Medium Influence","Weak Influence"
+    "hello","Medium Influence","Weak Influence"
 ]
 THRESHOLDS = [
     #needs to be edited to match actual thresholds
@@ -48,15 +48,19 @@ def get_text(captum_out):
 #    @input      the raw text input 
 #    @return     the input that was given, a Bool True if input was innapropreate, the formated tuples using build_tuples for influential tokens marked for anoteted_text
 
-def predict_on_input(input):
+def predict_on_input(random=True,row=None):
     #call model here
     
 
     
+    
+    if random:
+        captum_out = converted_data.sample(n=1).to_dict(orient="records")[0]
+    else:
+        print(type(converted_data.iloc[[int(row)]]))
+        print(type(converted_data.sample(n=1)))
+        captum_out = converted_data.iloc[[int(row)]].to_dict(orient="records")[0]
 
-    
-    captum_out = converted_data.sample(n=1).to_dict(orient="records")[0]
-    
     raw_text = get_text(captum_out)
 
     inappropriate = True if captum_out['Inappropriateness'][0].startswith('1') else False
@@ -109,6 +113,7 @@ def build_string(tup):
                 updated_list.append(token)
      
     updated_list = merge_same_influence(updated_list)
+    
     #put the formated string out
     annotated_text(updated_list)    
 
@@ -144,14 +149,16 @@ def main():
         st.subheader("Check an argument for Inappropriatness")
         
         with st.form(key='myform'):
-            raw_text = st.text_area("Input an argument here.")
+            raw_text = st.text_area("Input an index for the desired argument entry")
             submit_text = st.form_submit_button(label='Submit')
 
         if submit_text:
 
-
+            #legend
+            annotated_text([("Strong Influence","","#D3212C"),("Medium Influence","","#ED944D"),("Weak Influence","","#069C56")])
             #process the text
-            output, result, category_tuples = predict_on_input(raw_text)
+            print(raw_text)
+            output, result, category_tuples = predict_on_input(False, raw_text)
 
             
             st.text(output)
