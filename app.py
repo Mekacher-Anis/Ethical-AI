@@ -5,11 +5,17 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import ast
-from annotated_text import annotated_text
+from annotated_text import annotated_text, parameters
+
+parameters.PALETTE = [
+    "#D3212C",
+    "#ED944D",
+    "#069C56",
+]
 
 CATEGORIES = [
     #Threshold tags for influential tokens 
-    "hello","Medium Influence","Weak Influence"
+    "Strong Influence","Medium Influence","Weak Influence"
 ]
 THRESHOLDS = [
     #needs to be edited to match actual thresholds
@@ -20,8 +26,8 @@ THRESHOLDS = [
 
 
 #load csv of the captum testsets output
-#testset_csv = "tables/testset_together.csv"
-testset_csv = "tables/testset_prediction_text_result.csv"
+testset_csv = "tables/testset_together.csv"
+#testset_csv = "tables/testset_prediction_text_result.csv"
 data = pd.read_csv(testset_csv)
 
 
@@ -44,7 +50,7 @@ def get_text(captum_out):
 
 #    Here the model can be called to generate a responce on the input.
 #    The model predictes if a text is Innaprpriate or not and uses Captum to determin which tokens are influencing the decision.
-#    The Influence is formatet in a dictionary: {"Dimension of Innapropriateness": [{"token": "actul_token", "einfluss_wrt": float}]}
+#    The Influence is formatet in a dictionary: {"Dimension of Innapropriateness": ( "Value_if_Dimension_is_classified", [( "token", "influenz_value")]) }
 
 #    @input      the raw text input 
 #    @return     the input that was given, a Bool True if input was innapropreate, the formated tuples using build_tuples for influential tokens marked for anoteted_text
@@ -71,6 +77,25 @@ def predict_on_input(random=True,row=None):
 
     return raw_text, inappropriate, build_tuples(captum_out)
 
+def assign_color_to_influences(data):
+    result = []
+
+    influence_colors = {
+        "Strong Influence": "#D3212C",  # Red
+        "Medium Influence": "#ED944D",  # Yellow
+        "Weak Influence": "#069C56"    # Green
+    }
+
+    for item in data:
+        if isinstance(item, tuple) and len(item) == 2:
+            text, influence = item
+            color = influence_colors.get(influence, "#808080")  # Default to gray if influence not recognized
+            result.append((text, "", color))
+        else:
+            # Keep strings as they are
+            result.append(item)
+
+    return result
 
 
 #    Building a formatet string with annotated tokens using annotated_text from streamlit. 
@@ -116,7 +141,8 @@ def build_string(tup):
                 updated_list.append(token)
      
     updated_list = merge_same_influence(updated_list)
-    
+    updated_list = assign_color_to_influences(updated_list)
+
     #put the formated string out
     annotated_text(updated_list)    
 
@@ -145,26 +171,31 @@ def build_tuples(dic):
 
 def main():
     st.title("Ethical-Artificial-Inteligence")
-    menu = ["Home","About"]
+    menu = ["Captum","About"]
     choice = st.sidebar.selectbox("Menu",menu)
     
-    if choice == "Home":
+    if choice == "Captum":
         st.subheader("Check an argument for Inappropriatness")
-        
-        with st.form(key='myform'):
-            raw_text = st.text_area("Input an index for the desired argument entry")
-            submit_text = st.form_submit_button(label='Submit')
+        random = st.checkbox("Give a random Sentence", value=False)
+        raw_text = "0"
+        if not random:    
+            with st.form(key='myform'):
+                raw_text = st.text_area("Input an index for the desired argument entry")
+                submit_text = st.form_submit_button(label='Submit')
+        else:
+            submit_text = st.button("Get a random Text")
+            
 
         if submit_text:
 
             #legend
             annotated_text([("Strong Influence","","#D3212C"),("Medium Influence","","#ED944D"),("Weak Influence","","#069C56")])
             #process the text
-            print(raw_text)
-            output, result, category_tuples = predict_on_input(False, raw_text)
+            #print(raw_text)
+            output, result, category_tuples = predict_on_input(random, raw_text)
 
             
-            st.text(output)
+            st.text_area( "This is the chosen text", output, height=200, disabled=True) #uneditable textbox
 
             if result:
                 st.error("Inappropriate")
