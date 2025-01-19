@@ -176,7 +176,7 @@ def main():
     
     if choice == "Captum":
         st.subheader("Check an argument for Inappropriatness")
-        random = st.checkbox("Give a random Sentence", value=False)
+        random = st.checkbox("Random Argument", value=False)
         raw_text = "0"
         if not random:    
             with st.form(key='myform'):
